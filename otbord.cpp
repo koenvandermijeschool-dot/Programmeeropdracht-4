@@ -109,7 +109,7 @@ vakje* vakje::maakBord(int breedte, int hoogte) {
         rijPointer = rijPointer->geefBuur(4);
     }
     
-    // Maak standaard beginpositie
+    // Maak beginpositie(witte en zwarte vakjes)
     int midRij = hoogte / 2;
     int midKolom = breedte / 2;
     
@@ -166,24 +166,33 @@ void drukBordAf(vakje* linksboven, int breedte, int hoogte) {
 }
 
 // Constructor van OthelloBord
-OthelloBord::OthelloBord(int b, int h) : breedte(b), hoogte(h) {
-    // Maak een tijdelijk vakje object om maakBord aan te roepen
+OthelloBord::OthelloBord(int b, int h) : breedte(b), hoogte(h), huidigeSpeler('Z') {
     vakje v;
     linksboven = v.maakBord(breedte, hoogte);
 }
 
 // Destructor van OthelloBord
 OthelloBord::~OthelloBord() {
-    // Maak een tijdelijk vakje object om verwijderBord aan te roepen
     vakje v;
     v.verwijderBord(linksboven);
 }
 
 // Afdrukken van het bord
 void OthelloBord::afdrukken() {
+    // Print kolom letters bovenaan
+    cout << "  ";
+    for (int kolom = 0; kolom < breedte; kolom++) {
+        cout << " " << (char)('A' + kolom);
+    }
+    cout << endl;
+    
     vakje* rijPointer = linksboven;
     
     for (int rij = 0; rij < hoogte; rij++) {
+        // Print rij nummer
+        cout << (rij + 1) << " ";
+        if (rij + 1 < 10) cout << " ";  // Extra spatie voor uitlijning
+        
         vakje* kolomPointer = rijPointer;
         
         for (int kolom = 0; kolom < breedte; kolom++) {
@@ -195,6 +204,117 @@ void OthelloBord::afdrukken() {
         rijPointer = rijPointer->geefBuur(4);
     }
     cout << endl;
+}
+
+// Geeft de huidige speler terug
+char OthelloBord::geefHuidigeSpeler() {
+    return huidigeSpeler;
+}
+
+// Wisselt van speler
+void OthelloBord::wisselSpeler() {
+    huidigeSpeler = (huidigeSpeler == 'Z') ? 'W' : 'Z';
+}
+
+// Vindt een specifiek vakje op het bord op basis van rij en kolom (0-indexed)
+vakje* OthelloBord::vindVakje(int rij, int kolom) {
+    if (rij < 0 || rij >= hoogte || kolom < 0 || kolom >= breedte) {
+        return nullptr;
+    }
+    
+    vakje* huidig = linksboven;
+    
+    // Ga naar de juiste rij
+    for (int i = 0; i < rij; i++) {
+        huidig = huidig->geefBuur(4);  // naar beneden
+    }
+    
+    // Ga naar de juiste kolom
+    for (int i = 0; i < kolom; i++) {
+        huidig = huidig->geefBuur(2);  // naar rechts
+    }
+    
+    return huidig;
+}
+
+// Telt hoeveel stenen omgeslagen kunnen worden in een bepaalde richting
+int OthelloBord::telOmslaanInRichting(vakje* v, int richting, char speler) {
+    char tegenstander = (speler == 'Z') ? 'W' : 'Z';
+    vakje* huidig = v->geefBuur(richting);
+    int aantal = 0;
+    
+    // Tel tegenstander stenen
+    while (huidig != nullptr && huidig->geefInhoud() == tegenstander) {
+        aantal++;
+        huidig = huidig->geefBuur(richting);
+    }
+    
+    // Check of er een eigen steen aan het einde is
+    if (huidig != nullptr && huidig->geefInhoud() == speler && aantal > 0) {
+        return aantal;
+    }
+    
+    return 0;
+}
+
+// Controleert of een zet geldig is voor een bepaalde speler
+bool OthelloBord::isZetGeldig(vakje* v, char speler) {
+    // Vakje moet leeg zijn
+    if (v->geefInhoud() != '.') {
+        return false;
+    }
+    
+    // Check alle 8 richtingen
+    for (int richting = 0; richting < 8; richting++) {
+        if (telOmslaanInRichting(v, richting, speler) > 0) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// Slaat stenen om in een bepaalde richting
+void OthelloBord::slaOmInRichting(vakje* v, int richting, char speler, int aantal) {
+    vakje* huidig = v->geefBuur(richting);
+    
+    for (int i = 0; i < aantal; i++) {
+        huidig->zetInhoud(speler);
+        huidig = huidig->geefBuur(richting);
+    }
+}
+
+// Voert een zet uit op het bord
+bool OthelloBord::doeZet(char kolom, int rij) {
+    // Converteer kolom letter naar index (A=0, B=1, etc.)
+    int kolomIndex = kolom - 'A';
+    int rijIndex = rij - 1; 
+    
+    vakje* v = vindVakje(rijIndex, kolomIndex);
+    
+    if (v == nullptr) {
+        cout << "Ongeldige positie!" << endl;
+        return false;
+    }
+    
+    if (!isZetGeldig(v, huidigeSpeler)) {
+        cout << "Ongeldige zet! Je moet minimaal 1 steen omslaan." << endl;
+        return false;
+    }
+    
+    // Plaats de steen
+    v->zetInhoud(huidigeSpeler);
+    
+    // Sla stenen om in alle geldige richtingen
+    for (int richting = 0; richting < 8; richting++) {
+        int aantal = telOmslaanInRichting(v, richting, huidigeSpeler);
+        if (aantal > 0) {
+            slaOmInRichting(v, richting, huidigeSpeler, aantal);
+        }
+    }
+    
+    cout << "Zet uitgevoerd!" << endl;
+    return true;
 }
 
 
@@ -247,10 +367,8 @@ void menu() {
     cout << "Geef de hoogte van het bord (standaard 8): ";
     hoogte = leesGetal();   
     
-    if (breedte == 0) {
-        breedte = 8;}
-    if (hoogte == 0) {
-        hoogte = 8;}
+    if (breedte == 0) breedte = 8;
+    if (hoogte == 0) hoogte = 8;
     
     OthelloBord bord(breedte, hoogte);
     cout << endl << "Bord aangemaakt!" << endl << endl;
@@ -258,6 +376,7 @@ void menu() {
     bool spelActief = true;
     while (spelActief) {
         cout << "=== MENU ===" << endl;
+        cout << "Huidige speler: " << bord.geefHuidigeSpeler() << endl;
         cout << "T: Toon bord" << endl;
         cout << "D: Doe een zet" << endl;
         cout << "S: Stop het spel" << endl;
@@ -271,9 +390,28 @@ void menu() {
                 bord.afdrukken();
                 break;
                 
-            case 'd':
-                cout << "Zet functie nog niet geimplementeerd." << endl;
+            case 'd': {
+                char kolom;
+                int rij;
+                
+                // Lees kolom
+                cout << "Geef kolom (A-" << (char)('A' + breedte - 1) << "): ";
+                kolom = optieInlezen();
+                kolom = maakKleineLetter(kolom);
+                kolom = kolom - 'a' + 'A';  // Maak hoofdletter voor verwerking
+
+                cin.get();
+
+                // Lees rij
+                cout << "Geef rij (1-" << hoogte << "): ";
+                rij = leesGetal();
+                
+                if (bord.doeZet(kolom, rij)) {
+                    bord.wisselSpeler();
+                    bord.afdrukken();
+                }
                 break;
+            }
                 
             case 's':
                 cout << "Spel gestopt." << endl;
