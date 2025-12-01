@@ -1,5 +1,3 @@
-
-
 class vakje {
     private:
         char inhoud; // . of 'W' of 'Z'
@@ -21,11 +19,20 @@ class OthelloBord {
         vakje* linksboven;
         int breedte;
         int hoogte;
+        char huidigeSpeler;  // 'W' of 'Z'
+        
     
     public:
         OthelloBord(int b, int h);  // Constructor
         ~OthelloBord();             // Destructor
-        void afdrukken();           
+        void afdrukken();
+        bool doeZet(char kolom, int rij);
+        char geefHuidigeSpeler();
+        void wisselSpeler();
+        vakje* vindVakje(int rij, int kolom);
+        bool isZetGeldig(vakje* v, char speler);
+        int telOmslaanInRichting(vakje* v, int richting, char speler);
+        void slaOmInRichting(vakje* v, int richting, char speler, int aantal);
 };
 
 void menu();
