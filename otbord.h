@@ -20,8 +20,9 @@ class OthelloBord {
         int breedte;
         int hoogte;
         char huidigeSpeler;  // 'W' of 'Z'
+        bool witComputer;
+        bool zwartComputer;
         
-    
     public:
         OthelloBord(int b, int h);  // Constructor
         ~OthelloBord();             // Destructor
@@ -33,6 +34,13 @@ class OthelloBord {
         bool isZetGeldig(vakje* v, char speler);
         int telOmslaanInRichting(vakje* v, int richting, char speler);
         void slaOmInRichting(vakje* v, int richting, char speler, int aantal);
+        
+        // Nieuwe functies voor computer speler
+        bool heeftGeldigeZetten(char speler);
+        void doeComputerZet();
+        void zetWitComputer(bool isComputer);
+        void zetZwartComputer(bool isComputer);
+        bool isHuidigeSpelerComputer();
 };
 
 void menu();
