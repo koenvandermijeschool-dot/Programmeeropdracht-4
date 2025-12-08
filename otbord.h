@@ -41,6 +41,9 @@ class OthelloBord {
         void zetWitComputer(bool isComputer);
         void zetZwartComputer(bool isComputer);
         bool isHuidigeSpelerComputer();
+        bool isSpelAfgelopen();
+        int telStenen(char speler);
+        void toonEindstand();
 };
 
 void menu();
