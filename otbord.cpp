@@ -1,260 +1,324 @@
 #include <iostream>
 #include "otbord.h"
 #include <fstream>
-#include <cstdlib>
-#include <vector>
-
 using namespace std;
 
-// --- vakje implementatie ---
 
+
+// Zet alle pointers van een vakje op nullptr (constructor)
 vakje::vakje() : inhoud('.') {
     for (int i = 0; i < 8; i++) {
         buurvakjes[i] = nullptr;
     }
 }
 
-char vakje::geefInhoud() { return inhoud; }
-void vakje::zetInhoud(char c) { inhoud = c; }
+// Haalt inhoud van een vakje op
+char vakje::geefInhoud() {
+    return inhoud;
+}
 
+// Geef een waarde aan de inhoud van een vakje
+void vakje::zetInhoud(char c) {
+    inhoud = c;
+}
+
+// Geef pointer van een specifieke buur
 vakje* vakje::geefBuur(int richting) {
-    if (richting >= 0 && richting < 8) return buurvakjes[richting];
+    if (richting >= 0 && richting < 8) {
+        return buurvakjes[richting];
+    }
     return nullptr;
 }
 
+// Geef een waarde aan de pointer van een specifieke buur 
 void vakje::zetBuur(int richting, vakje* buurvakje) {
-    if (richting >= 0 && richting < 8) buurvakjes[richting] = buurvakje;
+    if (richting >= 0 && richting < 8) {
+        buurvakjes[richting] = buurvakje;
+    }
 }
 
+// Maakt een dubbelverbonden pointerlijst (1 rij van het bord)
 vakje* vakje::maakRij(int breedte) {
     vakje* eerste = new vakje();
     vakje* huidig = eerste;
+    
     for (int i = 1; i < breedte; i++) {
         vakje* volgend = new vakje();
-        huidig->zetBuur(2, volgend);
-        volgend->zetBuur(6, huidig);
+        huidig->zetBuur(2, volgend);      // pointer naar rechts
+        volgend->zetBuur(6, huidig);      // pointer naar links
         huidig = volgend;
     }
+    
     return eerste;
 }
 
+// Maakt het volledige pointer-bord
 vakje* vakje::maakBord(int breedte, int hoogte) {
+    // Maakt eerst de bovenste rij
     vakje* eersteRij = maakRij(breedte);
     vakje* huidigRijStart = eersteRij;
-
+    
+    //Maak de rest van de rijen en verbind ze verticaal
     for (int rij = 1; rij < hoogte; rij++) {
         vakje* nieuweRij = maakRij(breedte);
-        vakje* boven = huidigRijStart;
-        vakje* onder = nieuweRij;
-
+        
+        vakje* bovenVakje = huidigRijStart;
+        vakje* onderVakje = nieuweRij;
+        
         for (int kolom = 0; kolom < breedte; kolom++) {
-            boven->zetBuur(4, onder);
-            onder->zetBuur(0, boven);
-            boven = boven->geefBuur(2);
-            onder = onder->geefBuur(2);
+            bovenVakje->zetBuur(4, onderVakje);   // onder
+            onderVakje->zetBuur(0, bovenVakje);   // boven
+            
+            bovenVakje = bovenVakje->geefBuur(2);
+            onderVakje = onderVakje->geefBuur(2);
         }
+        
         huidigRijStart = nieuweRij;
     }
-
-    // diagonaal instellen
+    
+    // Verbind ze diagonaal
     vakje* rijPointer = eersteRij;
     for (int rij = 0; rij < hoogte; rij++) {
         vakje* kolomPointer = rijPointer;
+        
         for (int kolom = 0; kolom < breedte; kolom++) {
-            if (kolomPointer->geefBuur(0) != nullptr && kolomPointer->geefBuur(0)->geefBuur(2) != nullptr)
+            // Rechtsboven (1)
+            if (kolomPointer->geefBuur(0) != nullptr && 
+                kolomPointer->geefBuur(0)->geefBuur(2) != nullptr) {
                 kolomPointer->zetBuur(1, kolomPointer->geefBuur(0)->geefBuur(2));
-
-            if (kolomPointer->geefBuur(4) != nullptr) {
-                if (kolomPointer->geefBuur(4)->geefBuur(2) != nullptr)
-                    kolomPointer->zetBuur(3, kolomPointer->geefBuur(4)->geefBuur(2));
-                if (kolomPointer->geefBuur(4)->geefBuur(6) != nullptr)
-                    kolomPointer->zetBuur(5, kolomPointer->geefBuur(4)->geefBuur(6));
             }
-
-            if (kolomPointer->geefBuur(0) != nullptr && kolomPointer->geefBuur(0)->geefBuur(6) != nullptr)
+            
+            // Rechtsonder (3)
+            if (kolomPointer->geefBuur(4) != nullptr && 
+                kolomPointer->geefBuur(4)->geefBuur(2) != nullptr) {
+                kolomPointer->zetBuur(3, kolomPointer->geefBuur(4)->geefBuur(2));
+            }
+            
+            // Linksonder (5)
+            if (kolomPointer->geefBuur(4) != nullptr && 
+                kolomPointer->geefBuur(4)->geefBuur(6) != nullptr) {
+                kolomPointer->zetBuur(5, kolomPointer->geefBuur(4)->geefBuur(6));
+            }
+            
+            // Linksboven (7)
+            if (kolomPointer->geefBuur(0) != nullptr && 
+                kolomPointer->geefBuur(0)->geefBuur(6) != nullptr) {
                 kolomPointer->zetBuur(7, kolomPointer->geefBuur(0)->geefBuur(6));
-
+            }
+            
             kolomPointer = kolomPointer->geefBuur(2);
         }
+        
         rijPointer = rijPointer->geefBuur(4);
     }
-
-    // beginpositie
+    
+    // Maak beginpositie(witte en zwarte vakjes)
     int midRij = hoogte / 2;
     int midKolom = breedte / 2;
+    
     vakje* midden = eersteRij;
-    for (int i = 0; i < midRij - 1; i++) midden = midden->geefBuur(4);
-    for (int i = 0; i < midKolom - 1; i++) midden = midden->geefBuur(2);
-
+    for (int i = 0; i < midRij - 1; i++) {
+        midden = midden->geefBuur(4);
+    }
+    for (int i = 0; i < midKolom - 1; i++) {
+        midden = midden->geefBuur(2);
+    }
+    
     midden->zetInhoud('W');
     midden->geefBuur(2)->zetInhoud('Z');
     midden->geefBuur(4)->zetInhoud('Z');
     midden->geefBuur(4)->geefBuur(2)->zetInhoud('W');
-
+    
     return eersteRij;
 }
 
+// Ruimt het hele bord op
 void vakje::verwijderBord(vakje* linksboven) {
     vakje* rijPointer = linksboven;
+    
     while (rijPointer != nullptr) {
         vakje* volgendeRij = rijPointer->geefBuur(4);
         vakje* kolomPointer = rijPointer;
+        
         while (kolomPointer != nullptr) {
             vakje* volgendeKolom = kolomPointer->geefBuur(2);
             delete kolomPointer;
             kolomPointer = volgendeKolom;
         }
+        
         rijPointer = volgendeRij;
     }
 }
 
-// --- OthelloBord implementatie ---
 
-OthelloBord::OthelloBord(int b, int h)
-    : breedte(b), hoogte(h), huidigeSpeler('Z'), witComputer(false), zwartComputer(false), nietafdrukken(false) {
+OthelloBord::OthelloBord(int b, int h) : breedte(b), hoogte(h), huidigeSpeler('Z'), witComputer(false), zwartComputer(false), nietafdrukken(false) {
     vakje v;
     linksboven = v.maakBord(breedte, hoogte);
 }
 
+// Destructor van OthelloBord
 OthelloBord::~OthelloBord() {
     vakje v;
     v.verwijderBord(linksboven);
-}
+    
+    // === NIEUW: Ruim alle zetten in de stack op ===
+    while (!zetGeschiedenis.empty()) {
+        Zet* zet = zetGeschiedenis.top();
+        zetGeschiedenis.pop();
+        delete zet;
+    }}
 
 // Afdrukken van het bord
 void OthelloBord::afdrukken() {
+    // Print kolom letters bovenaan
     cout << "  ";
-    for (int kolom = 0; kolom < breedte; kolom++) cout << " " << (char)('A' + kolom);
+    for (int kolom = 0; kolom < breedte; kolom++) {
+        cout << " " << (char)('A' + kolom);
+    }
     cout << endl;
-
+    
     vakje* rijPointer = linksboven;
+    
     for (int rij = 0; rij < hoogte; rij++) {
-        cout << (rij + 1);
-        if (rij + 1 < 10) cout << " ";
-        cout << " ";
+        // Print rij nummer
+        cout << (rij + 1) << " ";
+        if (rij + 1 < 10) cout << " ";  // Extra spatie voor uitlijning
+        
         vakje* kolomPointer = rijPointer;
+        
         for (int kolom = 0; kolom < breedte; kolom++) {
             cout << kolomPointer->geefInhoud() << " ";
             kolomPointer = kolomPointer->geefBuur(2);
         }
         cout << endl;
+        
         rijPointer = rijPointer->geefBuur(4);
     }
     cout << endl;
 }
 
-// Vind vakje
+// Geeft de huidige speler terug
+char OthelloBord::geefHuidigeSpeler() {
+    return huidigeSpeler;
+}
+
+// Wisselt van speler
+void OthelloBord::wisselSpeler() {
+    huidigeSpeler = (huidigeSpeler == 'Z') ? 'W' : 'Z';
+}
+
+// Vindt een specifiek vakje op het bord op basis van rij en kolom (0-indexed)
 vakje* OthelloBord::vindVakje(int rij, int kolom) {
-    if (rij < 0 || rij >= hoogte || kolom < 0 || kolom >= breedte) return nullptr;
+    if (rij < 0 || rij >= hoogte || kolom < 0 || kolom >= breedte) {
+        return nullptr;
+    }
+    
     vakje* huidig = linksboven;
-    for (int i = 0; i < rij; i++) huidig = huidig->geefBuur(4);
-    for (int i = 0; i < kolom; i++) huidig = huidig->geefBuur(2);
+    
+    // Ga naar de juiste rij
+    for (int i = 0; i < rij; i++) {
+        huidig = huidig->geefBuur(4);  // naar beneden
+    }
+    
+    // Ga naar de juiste kolom
+    for (int i = 0; i < kolom; i++) {
+        huidig = huidig->geefBuur(2);  // naar rechts
+    }
+    
     return huidig;
 }
 
-// Zet logica
+// Telt hoeveel stenen omgeslagen kunnen worden in een bepaalde richting
 int OthelloBord::telOmslaanInRichting(vakje* v, int richting, char speler) {
     char tegenstander = (speler == 'Z') ? 'W' : 'Z';
     vakje* huidig = v->geefBuur(richting);
     int aantal = 0;
+    
+    // Tel tegenstander stenen
     while (huidig != nullptr && huidig->geefInhoud() == tegenstander) {
         aantal++;
         huidig = huidig->geefBuur(richting);
     }
-    if (huidig != nullptr && huidig->geefInhoud() == speler && aantal > 0) return aantal;
+    
+    // Check of er een eigen steen aan het einde is
+    if (huidig != nullptr && huidig->geefInhoud() == speler && aantal > 0) {
+        return aantal;
+    }
+    
     return 0;
 }
 
+// Controleert of een zet geldig is voor een bepaalde speler
 bool OthelloBord::isZetGeldig(vakje* v, char speler) {
-    if (v->geefInhoud() != '.') return false;
-    for (int richting = 0; richting < 8; richting++)
-        if (telOmslaanInRichting(v, richting, speler) > 0) return true;
+    // Vakje moet leeg zijn
+    if (v->geefInhoud() != '.') {
+        return false;
+    }
+    
+    // Check alle 8 richtingen
+    for (int richting = 0; richting < 8; richting++) {
+        if (telOmslaanInRichting(v, richting, speler) > 0) {
+            return true;
+        }
+    }
+    
     return false;
 }
 
+// Slaat stenen om in een bepaalde richting
 void OthelloBord::slaOmInRichting(vakje* v, int richting, char speler, int aantal) {
     vakje* huidig = v->geefBuur(richting);
+    
     for (int i = 0; i < aantal; i++) {
         huidig->zetInhoud(speler);
         huidig = huidig->geefBuur(richting);
     }
 }
 
-// doeZet met print-optie
-bool OthelloBord::doeZet(char kolom, int rij, bool print) {
+// Voert een zet uit op het bord
+bool OthelloBord::doeZet(char kolom, int rij) {
     int kolomIndex = kolom - 'A';
-    int rijIndex = rij - 1;
+    int rijIndex = rij - 1; 
+    
     vakje* v = vindVakje(rijIndex, kolomIndex);
+    
     if (v == nullptr) {
-        if (print) cout << "Ongeldige positie!" << endl;
+        cout << "Ongeldige positie!" << endl;
         return false;
     }
+    
     if (!isZetGeldig(v, huidigeSpeler)) {
-        if (print) cout << "Ongeldige zet! Je moet minimaal 1 steen omslaan." << endl;
+        cout << "Ongeldige zet! Je moet minimaal 1 steen omslaan." << endl;
         return false;
     }
+    
+    // === NIEUW: Sla de huidige bordsituatie op VOOR de zet ===
+    int bordGrootte = breedte * hoogte;
+    char* bordsituatie = new char[bordGrootte];
+    slaOpBordsituatie(bordsituatie);
+    
+    Zet* nieuweZet = new Zet(huidigeSpeler, bordsituatie, bordGrootte);
+    zetGeschiedenis.push(nieuweZet);
+    
+    delete[] bordsituatie;
+    // === EINDE NIEUW ===
+    
+    // Plaats de steen
     v->zetInhoud(huidigeSpeler);
+    
+    // Sla stenen om in alle geldige richtingen
     for (int richting = 0; richting < 8; richting++) {
         int aantal = telOmslaanInRichting(v, richting, huidigeSpeler);
-        if (aantal > 0) slaOmInRichting(v, richting, huidigeSpeler, aantal);
-    }
-    if (print && !nietafdrukken) cout << "Zet uitgevoerd!" << endl;
-    return true;
-}
-
-// --- Undo functionaliteit ---
-
-OthelloBord OthelloBord::deepCopy() {
-    OthelloBord kopie(breedte, hoogte);
-    vakje* rijOrig = linksboven;
-    vakje* rijKopie = kopie.linksboven;
-    for (int i = 0; i < hoogte; i++) {
-        vakje* kolOrig = rijOrig;
-        vakje* kolKopie = rijKopie;
-        for (int j = 0; j < breedte; j++) {
-            kolKopie->zetInhoud(kolOrig->geefInhoud());
-            kolOrig = kolOrig->geefBuur(2);
-            kolKopie = kolKopie->geefBuur(2);
+        if (aantal > 0) {
+            slaOmInRichting(v, richting, huidigeSpeler, aantal);
         }
-        rijOrig = rijOrig->geefBuur(4);
-        rijKopie = rijKopie->geefBuur(4);
     }
-    kopie.huidigeSpeler = huidigeSpeler;
-    kopie.witComputer = witComputer;
-    kopie.zwartComputer = zwartComputer;
-    kopie.nietafdrukken = nietafdrukken;
-    return kopie;
-}
-
-void OthelloBord::pushSnapshot() {
-    snapshots.push_back(deepCopy());
-}
-
-bool OthelloBord::undo() {
-    if (snapshots.empty()) return false;
-
-    OthelloBord laatste = snapshots.back();
-    snapshots.pop_back();
-
-    // Verwijder huidige bord
-    vakje v;
-    v.verwijderBord(linksboven);
-
-    // Zet alles terug van snapshot
-    linksboven = laatste.linksboven;
-    breedte = laatste.breedte;
-    hoogte = laatste.hoogte;
-    huidigeSpeler = laatste.huidigeSpeler;
-    witComputer = laatste.witComputer;
-    zwartComputer = laatste.zwartComputer;
-    nietafdrukken = laatste.nietafdrukken;
-
-    // Zorg dat snapshot object de pointers niet meer delete bij destructor
-    laatste.linksboven = nullptr;
-
+    if (!nietafdrukken){
+        cout << "Zet uitgevoerd!" << endl;
+    }
+    
     return true;
 }
-
 
 // Controleert of een speler geldige zetten heeft
 bool OthelloBord::heeftGeldigeZetten(char speler) {
@@ -383,16 +447,18 @@ void OthelloBord::toonEindstand() {
 
 // Reset het bord naar de beginpositie
 void OthelloBord::resetBord() {
-    // Verwijder het oude bord
     vakje v;
     v.verwijderBord(linksboven);
     
-    // Maak een nieuw bord
     linksboven = v.maakBord(breedte, hoogte);
-    
-    // Reset de huidige speler naar zwart
     huidigeSpeler = 'Z';
-}
+    
+    // === NIEUW: Wis de zetgeschiedenis ===
+    while (!zetGeschiedenis.empty()) {
+        Zet* zet = zetGeschiedenis.top();
+        zetGeschiedenis.pop();
+        delete zet;
+    }}
 
 // Speelt meerdere spellen en houdt statistieken bij
 void OthelloBord::speelMeerdereSpellen(int aantalSpellen) {
@@ -475,26 +541,68 @@ void OthelloBord::speelMeerdereSpellen(int aantalSpellen) {
     bestand.close();
 }
 
-void OthelloBord::doeZetZonderPrint(char kolom, int rij, char speler) {
-    char huidig = huidigeSpeler;
-    huidigeSpeler = speler;
-    doeZet(kolom, rij, false);
-    huidigeSpeler = huidig;
+void OthelloBord::slaOpBordsituatie(char* buffer) {
+    int index = 0;
+    for (int rij = 0; rij < hoogte; rij++) {
+        for (int kolom = 0; kolom < breedte; kolom++) {
+            vakje* v = vindVakje(rij, kolom);
+            buffer[index++] = v->geefInhoud();
+        }
+    }
 }
 
-char OthelloBord::geefHuidigeSpeler() {
-    return huidigeSpeler;
+// Herstelt een bordsituatie vanuit een buffer
+void OthelloBord::herstelBordsituatie(char* buffer) {
+    int index = 0;
+    for (int rij = 0; rij < hoogte; rij++) {
+        for (int kolom = 0; kolom < breedte; kolom++) {
+            vakje* v = vindVakje(rij, kolom);
+            v->zetInhoud(buffer[index++]);
+        }
+    }
 }
 
-void OthelloBord::wisselSpeler() {
-    huidigeSpeler = (huidigeSpeler == 'Z') ? 'W' : 'Z';
+// Geeft het aantal zetten dat ongedaan gemaakt kan worden
+int OthelloBord::geefAantalOngedaanMaken() {
+    return zetGeschiedenis.size();
 }
 
-// Getter breedte/hoogte
-int OthelloBord::geefBreedte() { 
-    return breedte; 
+// Maak de laatste zet ongedaan
+bool OthelloBord::undoZet() {
+    // Check hoeveel spelers computers zijn
+    bool tegenComputer = (witComputer && !zwartComputer) || (!witComputer && zwartComputer);
+    int aantalOngedaan = tegenComputer ? 2 : 1;  // 2 zetten als je tegen computer speelt
+    
+    // Check of er genoeg zetten zijn
+    if (zetGeschiedenis.size() < aantalOngedaan) {
+        cout << "Niet genoeg zetten om ongedaan te maken!" << endl;
+        return false;
+    }
+    
+    // Maak het juiste aantal zetten ongedaan
+    for (int i = 0; i < aantalOngedaan; i++) {
+        if (zetGeschiedenis.empty()) {
+            break;
+        }
+        
+        Zet* laatsteZet = zetGeschiedenis.top();
+        zetGeschiedenis.pop();
+        
+        // Herstel de bordsituatie
+        herstelBordsituatie(laatsteZet->bordsituatie);
+        
+        // Herstel de speler
+        huidigeSpeler = laatsteZet->speler;
+        
+        delete laatsteZet;
+    }
+    
+    if (tegenComputer) {
+        cout << "Laatste 2 zetten ongedaan gemaakt!" << endl;
+    } else {
+        cout << "Zet ongedaan gemaakt!" << endl;
+    }
+    cout << "Speler " << huidigeSpeler << " is aan de beurt." << endl;
+    
+    return true;
 }
-int OthelloBord::geefHoogte() { 
-    return hoogte; 
-}
-
