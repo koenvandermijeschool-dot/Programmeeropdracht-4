@@ -366,6 +366,49 @@ bool OthelloBord::isHuidigeSpelerComputer() {
     }
 }
 
+// Controleert of het spel afgelopen is (geen geldige zetten meer voor beide spelers)
+bool OthelloBord::isSpelAfgelopen() {
+    return !heeftGeldigeZetten('Z') && !heeftGeldigeZetten('W');
+}
+
+// Telt het aantal stenen van een bepaalde speler
+int OthelloBord::telStenen(char speler) {
+    int aantal = 0;
+    
+    for (int rij = 0; rij < hoogte; rij++) {
+        for (int kolom = 0; kolom < breedte; kolom++) {
+            vakje* v = vindVakje(rij, kolom);
+            if (v != nullptr && v->geefInhoud() == speler) {
+                aantal++;
+            }
+        }
+    }
+    
+    return aantal;
+}
+
+// Toont de eindstand en de winnaar
+void OthelloBord::toonEindstand() {
+    int aantalZwart = telStenen('Z');
+    int aantalWit = telStenen('W');
+    
+    cout << endl;
+    cout << "=== SPEL AFGELOPEN ===" << endl;
+    cout << "Eindstand:" << endl;
+    cout << "Zwart (Z): " << aantalZwart << " stenen" << endl;
+    cout << "Wit (W): " << aantalWit << " stenen" << endl;
+    cout << endl;
+    
+    if (aantalZwart > aantalWit) {
+        cout << "*** ZWART WINT! ***" << endl;
+    } else if (aantalWit > aantalZwart) {
+        cout << "*** WIT WINT! ***" << endl;
+    } else {
+        cout << "*** GELIJKSPEL! ***" << endl;
+    }
+    cout << endl;
+}
+
 
 
 
