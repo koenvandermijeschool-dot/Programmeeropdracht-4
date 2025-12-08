@@ -1,49 +1,58 @@
-class vakje {
-    private:
-        char inhoud; // . of 'W' of 'Z'
-        vakje* buurvakjes[8]; // Alle vakjes die naast het vakje kan liggen
+#ifndef OTBORD_H
+#define OTBORD_H
 
-    public:
-        vakje();
-        char geefInhoud();
-        void zetInhoud(char c);
-        vakje* geefBuur(int richting);
-        void zetBuur(int richting, vakje* buurvakje);
-        vakje* maakRij(int breedte);
-        vakje* maakBord(int breedte, int hoogte);
-        void verwijderBord(vakje* linksboven);
-};
+#include <vector>
+#include "Vakje.h"
 
 class OthelloBord {
-    private:
-        vakje* linksboven;
-        int breedte;
-        int hoogte;
-        char huidigeSpeler;  // 'W' of 'Z'
-        bool witComputer;
-        bool zwartComputer;
-        
-    public:
-        OthelloBord(int b, int h);  // Constructor
-        ~OthelloBord();             // Destructor
-        void afdrukken();
-        bool doeZet(char kolom, int rij);
-        char geefHuidigeSpeler();
-        void wisselSpeler();
-        vakje* vindVakje(int rij, int kolom);
-        bool isZetGeldig(vakje* v, char speler);
-        int telOmslaanInRichting(vakje* v, int richting, char speler);
-        void slaOmInRichting(vakje* v, int richting, char speler, int aantal);
-        
-        // Nieuwe functies voor computer speler
-        bool heeftGeldigeZetten(char speler);
-        void doeComputerZet();
-        void zetWitComputer(bool isComputer);
-        void zetZwartComputer(bool isComputer);
-        bool isHuidigeSpelerComputer();
-        bool isSpelAfgelopen();
-        int telStenen(char speler);
-        void toonEindstand();
+private:
+    vakje* linksboven;
+    int breedte;
+    int hoogte;
+    char huidigeSpeler;  // 'W' of 'Z'
+    bool witComputer;
+    bool zwartComputer;
+    bool nietafdrukken;
+    
+    std::vector<OthelloBord> snapshots;  // sla hele bord objecten op
+
+public:
+    OthelloBord(int b, int h);
+    ~OthelloBord();
+
+    void afdrukken();
+    bool doeZet(char kolom, int rij, bool print = true);
+    char geefHuidigeSpeler();
+    void wisselSpeler();
+    vakje* vindVakje(int rij, int kolom);
+    bool isZetGeldig(vakje* v, char speler);
+    int telOmslaanInRichting(vakje* v, int richting, char speler);
+    void slaOmInRichting(vakje* v, int richting, char speler, int aantal);
+
+    bool heeftGeldigeZetten(char speler);
+    void doeComputerZet();
+    void zetWitComputer(bool isComputer);
+    void zetZwartComputer(bool isComputer);
+    bool isHuidigeSpelerComputer();
+    bool isSpelAfgelopen();
+    int telStenen(char speler);
+    void toonEindstand();
+    bool getWitComputer();
+    bool getZwartComputer();
+    void speelMeerdereSpellen(int aantalSpellen);
+    void resetBord();
+    void zetNietAfdrukken(bool a);
+
+    // Undo / snapshot functies
+    void doeZetZonderPrint(char kolom, int rij, char speler);
+    OthelloBord deepCopy();
+    void pushSnapshot();
+    bool undo();
+
+    int geefBreedte();
+    int geefHoogte();
 };
 
 void menu();
+
+#endif
