@@ -1,7 +1,28 @@
+#include <stack>
+using namespace std;
+
+// Struct om een zet op te slaan
+struct Zet {
+    char* bordsituatie;  // Kopie van het hele bord
+    char speler;         // Speler die de zet deed
+    int bordGrootte;
+    
+    Zet(char s, char* bord, int grootte) : speler(s), bordGrootte(grootte) {
+        bordsituatie = new char[grootte];
+        for (int i = 0; i < grootte; i++) {
+            bordsituatie[i] = bord[i];
+        }
+    }
+    
+    ~Zet() {
+        delete[] bordsituatie;
+    }
+};
+
 class vakje {
     private:
-        char inhoud; // . of 'W' of 'Z'
-        vakje* buurvakjes[8]; // Alle vakjes die naast het vakje kan liggen
+        char inhoud;
+        vakje* buurvakjes[8];
 
     public:
         vakje();
@@ -19,14 +40,15 @@ class OthelloBord {
         vakje* linksboven;
         int breedte;
         int hoogte;
-        char huidigeSpeler;  // 'W' of 'Z'
+        char huidigeSpeler;
         bool witComputer;
         bool zwartComputer;
-        bool nietafdrukken;  
+        bool nietafdrukken;
+        stack<Zet*> zetGeschiedenis;  // Standaard STL stack!
         
     public:
-        OthelloBord(int b, int h);  // Constructor
-        ~OthelloBord();             // Destructor
+        OthelloBord(int b, int h);
+        ~OthelloBord();
         void afdrukken();
         bool doeZet(char kolom, int rij);
         char geefHuidigeSpeler();
@@ -36,7 +58,6 @@ class OthelloBord {
         int telOmslaanInRichting(vakje* v, int richting, char speler);
         void slaOmInRichting(vakje* v, int richting, char speler, int aantal);
         
-        // Nieuwe functies voor computer speler
         bool heeftGeldigeZetten(char speler);
         void doeComputerZet();
         void zetWitComputer(bool isComputer);
@@ -50,7 +71,12 @@ class OthelloBord {
         void speelMeerdereSpellen(int aantalSpellen);
         void resetBord();
         void zetNietAfdrukken(bool a);
-
+        
+        // Undo functies
+        bool undoZet();
+        void slaOpBordsituatie(char* buffer);
+        void herstelBordsituatie(char* buffer);
+        int geefAantalOngedaanMaken();
 };
 
 void menu();
