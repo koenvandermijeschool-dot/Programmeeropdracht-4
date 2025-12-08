@@ -69,7 +69,6 @@ void menu(){
         karakter = optieInlezen();
         bord.zetZwartComputer(maakKleineLetter(karakter) == 'j');
 
-        // Als beide computers zijn, vraag hoeveel spellen
         if (bord.getZwartComputer() && bord.getWitComputer()) {
             int aantalSpellen;
             cin.ignore(1000, '\n');
@@ -81,7 +80,6 @@ void menu(){
             cout << endl << "Start " << aantalSpellen << " spel(len)..." << endl;
             bord.speelMeerdereSpellen(aantalSpellen);
         } else {
-            // Normale spelloop voor menselijke spelers
             cout << endl << "Bord aangemaakt!" << endl << endl;
             
             bool spelActief = true;
@@ -113,6 +111,8 @@ void menu(){
                 cout << "Huidige speler: " << bord.geefHuidigeSpeler() << endl;
                 cout << "T: Toon bord" << endl;
                 cout << "D: Doe een zet" << endl;
+                cout << "O: Ongedaan maken (zetten beschikbaar: " 
+                     << bord.geefAantalOngedaanMaken() << ")" << endl;
                 cout << "S: Stop het spel" << endl;
                 cout << "Keuze: ";
                 
@@ -144,6 +144,12 @@ void menu(){
                         }
                         break;
                     }
+                    
+                    case 'o':
+                        if (bord.undoZet()) {
+                            bord.afdrukken();
+                        }
+                        break;
                         
                     case 's':
                         cout << "Spel gestopt." << endl;
@@ -158,7 +164,6 @@ void menu(){
             }
         }
         
-        // Vraag of speler opnieuw wil spelen
         cout << "\nWil je opnieuw spelen? (J/N): ";
         karakter = optieInlezen();
         cin.ignore(1000, '\n');  
