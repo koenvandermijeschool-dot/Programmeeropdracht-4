@@ -1,6 +1,9 @@
 #include <iostream>
 #include "otbord.h"
+#include <fstream>
 using namespace std;
+
+
 
 // Zet alle pointers van een vakje op nullptr (constructor)
 vakje::vakje() : inhoud('.') {
@@ -444,6 +447,11 @@ void OthelloBord::speelMeerdereSpellen(int aantalSpellen) {
     int zwartWinsten = 0;
     int witWinsten = 0;
     int gelijkspellen = 0;
+
+    ofstream bestand("output.txt");
+    if (!bestand) {
+        cout << "Kon bestand niet openen!" << endl;
+}
     
     // Zet stille mode aan als er meer dan 1 spel is
     if (aantalSpellen > 1) {
@@ -496,7 +504,9 @@ void OthelloBord::speelMeerdereSpellen(int aantalSpellen) {
             if (!nietafdrukken) cout << "GELIJKSPEL" << endl;
             gelijkspellen++;
         }
+        bestand << spelNummer << " " << zwartWinsten << " " << witWinsten << " " << gelijkspellen << "\n";
         
+
         
     
     }
@@ -510,4 +520,5 @@ void OthelloBord::speelMeerdereSpellen(int aantalSpellen) {
     cout << "Wit gewonnen: " << witWinsten << endl;
     cout << "Gelijkspel: " << gelijkspellen << endl;
          
+    bestand.close();
 }
