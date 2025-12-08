@@ -40,101 +40,124 @@ int leesGetal()
 
     return getalbuffer;
 }
-
-void menu() {
-    // Simpele seed zonder time - gebruik een static variabele
-    static bool geinitialiseerd = false;
-    if (!geinitialiseerd) {
-        srand(12345);  // Of gebruik een andere constante
-        geinitialiseerd = true;
-    }
+void menu(){
+bool opnieuwSpelen = true;
     
-    int breedte, hoogte;
-    char keuze;
-    char karakter;
-    
-    cout << "=== Welkom bij Othello ===" << endl << endl;
-    
-    cout << "Geef de breedte van het bord (standaard 8): ";
-    breedte = leesGetal();  
-    
-    cout << "Geef de hoogte van het bord (standaard 8): ";
-    hoogte = leesGetal();   
-    
-    if (breedte == 0) breedte = 8;
-    if (hoogte == 0) hoogte = 8;
-    
-    OthelloBord bord(breedte, hoogte);
-    
-    cout << "Is wit een Computer? (J/N): ";
-    karakter = optieInlezen();
-    bord.zetWitComputer(maakKleineLetter(karakter) == 'j');
-    
-    cout << "Is zwart een Computer? (J/N): ";
-    karakter = optieInlezen();
-    bord.zetZwartComputer(maakKleineLetter(karakter) == 'j');
-    
-    cout << endl << "Bord aangemaakt!" << endl << endl;
-    
-    bool spelActief = true;
-    while (spelActief) {
-        if (bord.isHuidigeSpelerComputer()) {
-            cout << "Computer aan de beurt..." << endl;
-            bord.afdrukken();
-            bord.doeComputerZet();
-            bord.wisselSpeler();
-            cout << endl;
-            continue;
-        }
+    while (opnieuwSpelen) {
+        int breedte, hoogte;
+        char keuze;
+        char karakter;
         
-        cout << "=== MENU ===" << endl;
-        cout << "Huidige speler: " << bord.geefHuidigeSpeler() << endl;
-        cout << "T: Toon bord" << endl;
-        cout << "D: Doe een zet" << endl;
-        cout << "S: Stop het spel" << endl;
-        cout << "Keuze: ";
+        cout << "=== Welkom bij Othello ===" << endl << endl;
         
-        keuze = optieInlezen();           
-        keuze = maakKleineLetter(keuze);  
+        cout << "Geef de breedte van het bord (standaard 8): ";
+        breedte = leesGetal();  
         
-        switch(keuze) {
-            case 't':
+        cout << "Geef de hoogte van het bord (standaard 8): ";
+        hoogte = leesGetal();   
+        
+        if (breedte == 0) breedte = 8;
+        if (hoogte == 0) hoogte = 8;
+        
+        OthelloBord bord(breedte, hoogte);
+        
+        cout << "Is wit een Computer? (J/N): ";
+        karakter = optieInlezen();
+        bord.zetWitComputer(maakKleineLetter(karakter) == 'j');
+        
+        cout << "Is zwart een Computer? (J/N): ";
+        karakter = optieInlezen();
+        bord.zetZwartComputer(maakKleineLetter(karakter) == 'j');
+        
+        cout << endl << "Bord aangemaakt!" << endl << endl;
+        
+        bool spelActief = true;
+        while (spelActief) {
+            // Check of het spel afgelopen is
+            if (bord.isSpelAfgelopen()) {
                 bord.afdrukken();
-                break;
-                
-            case 'd': {
-                char kolom;
-                int rij;
-                
-                cout << "Geef kolom (A-" << (char)('A' + breedte - 1) << "): ";
-                kolom = optieInlezen();
-                kolom = maakKleineLetter(kolom);
-                kolom = kolom - 'a' + 'A';
-
-                cin.get();
-
-                cout << "Geef rij (1-" << hoogte << "): ";
-                rij = leesGetal();
-                
-                if (bord.doeZet(kolom, rij)) {
-                    bord.wisselSpeler();
-                    bord.afdrukken();
-                }
-                break;
-            }
-                
-            case 's':
-                cout << "Spel gestopt." << endl;
+                bord.toonEindstand();
                 spelActief = false;
                 break;
-                
-            default:
-                cout << "Ongeldige keuze, probeer opnieuw." << endl;
-                break;
+            }
+            
+            // Check of huidige speler geen zetten heeft
+            if (!bord.heeftGeldigeZetten(bord.geefHuidigeSpeler())) {
+                cout << "Speler " << bord.geefHuidigeSpeler() 
+                     << " heeft geen geldige zetten. Beurt wordt overgeslagen." << endl;
+                bord.wisselSpeler();
+                continue;
+            }
+            
+            if (bord.isHuidigeSpelerComputer()) {
+                cout << "Computer aan de beurt..." << endl;
+                bord.afdrukken();
+                bord.doeComputerZet();
+                bord.wisselSpeler();
+                cout << endl;
+                continue;
+            }
+            
+            cout << "=== MENU ===" << endl;
+            cout << "Huidige speler: " << bord.geefHuidigeSpeler() << endl;
+            cout << "T: Toon bord" << endl;
+            cout << "D: Doe een zet" << endl;
+            cout << "S: Stop het spel" << endl;
+            cout << "Keuze: ";
+            
+            keuze = optieInlezen();           
+            keuze = maakKleineLetter(keuze);  
+            
+            switch(keuze) {
+                case 't':
+                    bord.afdrukken();
+                    break;
+                    
+                case 'd': {
+                    char kolom;
+                    int rij;
+                    
+                    cout << "Geef kolom (A-" << (char)('A' + breedte - 1) << "): ";
+                    kolom = optieInlezen();
+                    kolom = maakKleineLetter(kolom);
+                    kolom = kolom - 'a' + 'A';
+
+                    cin.get();
+
+                    cout << "Geef rij (1-" << hoogte << "): ";
+                    rij = leesGetal();
+                    
+                    if (bord.doeZet(kolom, rij)) {
+                        bord.wisselSpeler();
+                        bord.afdrukken();
+                    }
+                    break;
+                }
+                    
+                case 's':
+                    cout << "Spel gestopt." << endl;
+                    spelActief = false;
+                    break;
+                    
+                default:
+                    cout << "Ongeldige keuze, probeer opnieuw." << endl;
+                    break;
+            }
+            cout << endl;
+        }
+        
+        // Vraag of speler opnieuw wil spelen
+        cout << "Wil je opnieuw spelen? (J/N): ";
+        karakter = optieInlezen();
+        cin.ignore(1000, '\n');  
+        
+        if (maakKleineLetter(karakter) != 'j') {
+            opnieuwSpelen = false;
+            cout << "Bedankt voor het spelen!" << endl;
         }
         cout << endl;
-    }
-}
+    }}
+
 
 int main() {
     menu();
