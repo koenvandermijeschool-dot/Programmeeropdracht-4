@@ -50,7 +50,6 @@ int leesGetal()
     return getalbuffer;
 }
 //Menu wordt geprint waarbij de gebruiker keuzes kan maken om het spel te spelen.
-gebruiker alle keuzes in dit menu kan maken .
 void menu(){
     bool opnieuwSpelen = true; //Als false stopt spel
     
@@ -104,11 +103,11 @@ void menu(){
                     spelActief = false;
                     break;
                 }
-                //Beurt wordt overgeslagen als speler geen huidige zetten heeft.
+                //Spel eindigt als huidige speler geen geldige zet.
                 if (!bord.heeftGeldigeZetten(bord.geefHuidigeSpeler())) {
                     cout << "Speler " << bord.geefHuidigeSpeler() 
-                         << " heeft geen geldige zetten. Beurt wordt overgeslagen." << endl;
-                    bord.wisselSpeler();
+                         << " heeft geen geldige zetten. Spel eindigt." << endl;
+                    spelActief = false;
                     continue;
                 }
                 //Als computer aan de beurt is doe dan computer zet
